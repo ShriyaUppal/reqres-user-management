@@ -43,7 +43,7 @@ Displays success or error messages based on API responses.
 4. Open http://localhost:3000 in your browser.
 
 Deployment: Hosted on [Netlify] 
-Deployment Link: (`https://employee-list-reqres.netlify.app/`)
+Deployment Link: (https://employee-list-reqres.netlify.app/)
 Used React Router for navigation.
 Author: Shriya Uppal
 
