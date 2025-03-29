@@ -1,41 +1,42 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
-const EditUser = ({ onUpdateUser }) => {
+const EditUser = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [user, setUser] = useState({ first_name: "", last_name: "", email: "" });
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+
+  const [user, setUser] = useState(location.state?.user || { first_name: "", last_name: "", email: "" });
+  const [loading, setLoading] = useState(!location.state?.user);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // ✅ Fetch user details from API
-    const fetchUser = async () => {
-      try {
-        const response = await axios.get(`https://reqres.in/api/users/${id}`);
-        setUser(response.data.data);
-      } catch (err) {
-        setError("Failed to fetch user details");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
-  }, [id]);
+    if (!location.state?.user) {
+      const fetchUser = async () => {
+        try {
+          const response = await axios.get(`https://reqres.in/api/users/${id}`);
+          setUser(response.data.data);
+        } catch (err) {
+          setError("Failed to fetch user details");
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchUser();
+    }
+  }, [id, location.state?.user]);
 
-  // ✅ Handle user update
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.put(`https://reqres.in/api/users/${id}`, user);
 
-      // ✅ Since Reqres doesn't persist updates, manually update state
+      // Simulating update (Reqres API does not persist changes)
       const updatedUser = { ...user, id: Number(id) };
-      onUpdateUser(updatedUser);
+      navigate("/users", { state: { updatedUser } });
 
       alert("User updated successfully!");
-      navigate("/users");
     } catch (err) {
       setError("Failed to update user");
     }
@@ -80,17 +81,12 @@ const EditUser = ({ onUpdateUser }) => {
             />
           </div>
           <div className="flex justify-between">
-            <button
-              type="button"
-              onClick={() => navigate("/users")}
-              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 hover:cursor-pointer"
-            >
+            <button onClick={() => navigate("/users")}
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
               Cancel
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 hover:cursor-pointer"
-            >
+            <button type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
               Update
             </button>
           </div>

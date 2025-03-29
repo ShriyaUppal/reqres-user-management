@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 const Users = () => {
@@ -7,9 +7,21 @@ const Users = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 3; // Adjust the number of users per page
+  const usersPerPage = 3;
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // If navigated from Edit, update user list
+  useEffect(() => {
+    if (location.state?.updatedUser) {
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === location.state.updatedUser.id ? location.state.updatedUser : user
+        )
+      );
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -18,12 +30,10 @@ const Users = () => {
         setUsers(response.data.data);
       } catch (err) {
         setError("Failed to fetch users");
-        console.error("Error fetching users:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchUsers();
   }, []);
 
@@ -35,31 +45,14 @@ const Users = () => {
         alert("User deleted successfully!");
       } catch (err) {
         alert("Failed to delete user");
-        console.error("Error deleting user:", err);
       }
     }
   };
 
-  // Pagination Logic
   const totalPages = Math.ceil(users.length / usersPerPage);
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
-
-  const nextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
-
-  if (loading) return <div className="text-center mt-8">Loading...</div>;
-  if (error) return <div className="text-center mt-8 text-red-500">{error}</div>;
 
   return (
     <div className="container mx-auto p-4">
@@ -78,14 +71,14 @@ const Users = () => {
               </div>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => navigate(`/edit/${user.id}`)}
-                  className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 hover:cursor-pointer"
+                  onClick={() => navigate(`/edit/${user.id}`, { state: { user } })}
+                  className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => handleDelete(user.id)}
-                  className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 hover:cursor-pointer"
+                  className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                 >
                   Delete
                 </button>
@@ -97,18 +90,16 @@ const Users = () => {
 
       {/* Pagination Controls */}
       <div className="flex justify-center mt-6 space-x-4">
-        <button
-          onClick={prevPage}
+        <button onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
-          className={`px-4 py-2 text-white rounded ${currentPage === 1 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 hover:cursor-pointer"}`}
+          className={`px-4 py-2 text-white rounded ${currentPage === 1 ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"}`}
         >
           Prev
         </button>
         <span className="px-4 py-2 bg-gray-200 rounded">Page {currentPage} of {totalPages}</span>
-        <button
-          onClick={nextPage}
+        <button onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
           disabled={currentPage === totalPages}
-          className={`px-4 py-2 text-white rounded ${currentPage === totalPages ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 hover:cursor-pointer"}`}
+          className={`px-4 py-2 text-white rounded ${currentPage === totalPages ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"}`}
         >
           Next
         </button>
